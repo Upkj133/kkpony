@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Pixel Pony V5: 诸神纪元</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="js/save.js"></script>
+    <script src="js/genetics.js"></script>
+    <script src="js/pony.js"></script>
+    <script src="js/nurture.js"></script>
+    <script src="js/racing.js"></script>
+    <script src="js/farm.js"></script>
+    <script src="js/market.js"></script>
+    <script src="js/training.js"></script>
+    <script src="js/gacha.js"></script>
+    <script src="js/renderer.js"></script>
+</head>
+<body>
+    <header class="glass-panel">
+        <h1>🦄 小马世界 V5: 诸神降诞</h1>
+        <ul class="resource-bar">
+            <li class="resource coins" title="金币">💰 <span id="coin-counter">0</span></li>
+            <li class="resource carrots" title="体力胡萝卜">🥕 <span id="carrot-counter">0</span></li>
+            <li class="resource tokens" title="祈愿代币">🪙 <span id="token-counter">0</span></li>
+        </ul>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" data-target="view-stable">🐎 皇室马厩</button>
+        <button class="tab-btn" data-target="view-race">🏆 荣耀远征</button>
+        <button class="tab-btn" data-target="view-farm">🥕 丰收庄园</button>
+        <button class="tab-btn" data-target="view-market">⚖️ 黑市中转</button>
+        <button class="tab-btn" data-target="view-gacha" style="color:#00FFFF; border-color:#00FFFF;">🎰 幻兽祭坛</button>
+    </div>
+
+    <main>
+        <!-- STABLE -->
+        <div id="view-stable" class="tab-view active split-layout">
+            <aside class="controls-panel" style="overflow-y:auto;">
+                <div class="control-group glass-panel">
+                    <h2>🧬 血统实验室</h2>
+                    <div class="breeding-slots">
+                        <div class="parent-slot" id="slot-sire" onclick="openModal('male')">
+                            <span style="font-size:2rem">♂️</span><p>挂载生父</p>
+                        </div>
+                        <div style="font-weight:bold; color: #E91E63; font-size:1.2rem;">+</div>
+                        <div class="parent-slot" id="slot-dam" onclick="openModal('female')">
+                            <span style="font-size:2rem">♀️</span><p>挂载生母</p>
+                        </div>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--text-secondary); text-align:center;">(消耗双方50体力)</p>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px">
+                        <span>3h</span><span style="color:#00d2ff; font-weight:bold" id="hours-display">8h</span><span style="color:#E91E63">12h</span>
+                    </div>
+                    <input type="range" id="breed-slider" min="3" max="12" value="8" step="1">
+                    <div id="prob-preview" style="font-size: 0.8rem; color: var(--text-secondary); text-align:center;">
+                        遗传: 60% | 变异: 40%
+                    </div>
+                    <button id="btn-breed" class="btn" disabled>配置双亲</button>
+                </div>
+            </aside>
+            <section class="stable-area glass-panel" id="stable-container"></section>
+        </div>
+
+        <!-- RACING -->
+        <div id="view-race" class="tab-view">
+            <div class="glass-panel" style="max-width:800px; margin:0 auto;">
+                <h2 style="margin-bottom:20px;">🌍 远征面板 (高爆率掉落代币)</h2>
+                <div class="track-list">
+                    <div class="track-card plains" onclick="openModal('race_plains')">
+                        <div class="track-header"><span>🌿 翡翠平原</span><span style="color:#FFD700">100💰</span></div>
+                        <div class="track-desc">门槛: 火力 60+ (当前马匹速度+耐力+灵性)</div>
+                    </div>
+                    <div class="track-card volcano" onclick="openModal('race_volcano')">
+                        <div class="track-header"><span>🌋 熔岩火山口</span><span style="color:#FFD700">400💰+🥕</span></div>
+                        <div class="track-desc">门槛: 火力 160+ | 携带【火系/红系】特征者战力乘1.5倍。胜出高概率掉落祈愿代币！</div>
+                    </div>
+                    <div class="track-card sky" onclick="openModal('race_sky')">
+                        <div class="track-header"><span>☁️ 天空神殿</span><span style="color:#FFD700">1200💰+🥕</span></div>
+                        <div class="track-desc">门槛: 火力 350+ | 携带【任意翅膀】者战力乘1.5倍。必爆祈愿代币。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FARM -->
+        <div id="view-farm" class="tab-view">
+            <div class="glass-panel" style="margin-bottom:20px;">
+                <h2>🏞️ 皇家庄园</h2><p style="color:var(--text-secondary)">播种耗费 50 金币，1小时成型</p>
+            </div>
+            <div class="farm-grid" id="farm-container"></div>
+        </div>
+
+        <!-- MARKET -->
+        <div id="view-market" class="tab-view">
+            <div class="glass-panel" style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><h2>⚖️ 黑市中转站</h2>
+                    <p style="color:var(--text-secondary)">出售闲置马匹回血。或者刷新队列高额引入神驹！(每8小时自动刷新)</p></div>
+                    <button class="btn" style="width:auto; margin:0; background:#9932CC;" onclick="actionForceRestock()">强制刷新库 (消耗1代币)</button>
+                </div>
+            </div>
+            
+            <h3 class="market-section-title">🔽 引援货架 (Buy)</h3>
+            <div class="market-grid" id="market-buy-container" style="margin-bottom: 40px;"></div>
+            
+            <h3 class="market-section-title">🔼 您的闲置挂牌 (Sell)</h3>
+            <div class="market-grid" id="market-sell-container"></div>
+        </div>
+
+        <!-- GACHA -->
+        <div id="view-gacha" class="tab-view">
+            <div class="glass-panel gacha-container">
+                <h2 style="font-size:2.5rem; margin-bottom:10px; color:#00FFFF; text-shadow:0 0 10px #00FFFF;">幻兽祭坛</h2>
+                <p style="color:#ddd; margin-bottom:40px;">向虚空投入 1 枚祈愿代币。可能召唤海量物资、实战马匹、亦或是一颗 <b>【Mythic 神话种彩蛋】</b>。</p>
+                
+                <div class="gacha-machine" onclick="actionGacha()">
+                    <div class="gacha-core">🔮</div>
+                    <div class="gacha-text">消耗 1 Token</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Selection Modal -->
+    <div id="pony-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('pony-modal')">&times;</button>
+            <h2 id="modal-title">选择马匹</h2>
+            <div style="color:#aaa; margin-bottom:10px;" id="modal-desc"></div>
+            <div class="selection-grid" id="modal-grid"></div>
+        </div>
+    </div>
+
+    <!-- Details/Training Modal -->
+    <div id="detail-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width:900px;" id="detail-wrapper">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let gameState = SaveManager.load();
+            let nurtureMgr = new NurtureManager(gameState, renderApp);
+            
+            // Override racing manager to inject token drops on volcano/sky
+            class V5RacingManager extends RacingManager {
+                racePony(id, tid) {
+                    const res = super.racePony(id, tid);
+                    if(res.isWin) {
+                        if(tid === 'volcano' && Math.random() < 0.3) { gameState.tokens += 1; res.gotToken = true; }
+                        if(tid === 'sky' && Math.random() < 0.8) { gameState.tokens += 1; res.gotToken = true; }
+                    }
+                    return res;
+                }
+            }
+            
+            let racingMgr = new V5RacingManager(gameState, renderApp);
+            let farmMgr = new FarmManager(gameState, renderApp);
+            let marketMgr = new MarketManager(gameState, renderApp);
+            let trainingMgr = new TrainingManager(gameState, renderApp);
+            let gachaMgr = new GachaManager(gameState, renderApp);
+
+            let selectedSire = null; let selectedDam = null; let currentModalAction = null; 
+
+            const UI = {
+                coins: document.getElementById('coin-counter'), carrots: document.getElementById('carrot-counter'), tokens: document.getElementById('token-counter'),
+                slider: document.getElementById('breed-slider'), hourDisplay: document.getElementById('hours-display'),
+                probPreview: document.getElementById('prob-preview'), stable: document.getElementById('stable-container'),
+                btnBreed: document.getElementById('btn-breed'), slotSire: document.getElementById('slot-sire'), slotDam: document.getElementById('slot-dam'),
+                modal: document.getElementById('pony-modal'), modalTitle: document.getElementById('modal-title'), modalDesc: document.getElementById('modal-desc'),
+                modalGrid: document.getElementById('modal-grid'), farmContainer: document.getElementById('farm-container'), 
+                marketSellContainer: document.getElementById('market-sell-container'), marketBuyContainer: document.getElementById('market-buy-container'),
+                detailModal: document.getElementById('detail-modal'), detailWrapper: document.getElementById('detail-wrapper')
+            };
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.target).classList.add('active');
+                    if(btn.dataset.target === 'view-market') marketMgr.checkRestock(); // Refresh logical timer view
+                };
+            });
+
+            function updateProbs() {
+                const hours = parseInt(UI.slider.value);
+                UI.hourDisplay.textContent = hours + 'h';
+                const sGen = selectedSire ? selectedSire.generation : 1;
+                const dGen = selectedDam ? selectedDam.generation : 1;
+                const gen = Math.max(sGen, dGen) + 1;
+                const rates = GeneticsManager.calculateMutationRate(hours, gen);
+                UI.probPreview.innerHTML = `🌟 预期 Gen ${gen} | 神话率: ${(rates.mythic*100).toFixed(1)}% | 传奇率: ${(rates.epic*100).toFixed(1)}%`;
+            }
+            UI.slider.addEventListener('input', updateProbs);
+            updateProbs();
+
+            function refreshBreedingSlots() {
+                if(selectedSire) { UI.slotSire.innerHTML = `<div style="transform:scale(0.8)">${PonyRenderer.renderPonySVG(selectedSire.dna)}</div><p>${selectedSire.name}</p>`; UI.slotSire.classList.add('selected'); }
+                if(selectedDam) { UI.slotDam.innerHTML = `<div style="transform:scale(0.8)">${PonyRenderer.renderPonySVG(selectedDam.dna)}</div><p>${selectedDam.name}</p>`; UI.slotDam.classList.add('selected'); }
+                if(selectedSire && selectedDam) { UI.btnBreed.disabled = false; UI.btnBreed.innerText = '孕育生命'; } 
+                else { UI.btnBreed.disabled = true; UI.btnBreed.innerText = '需配置双亲'; }
+                updateProbs();
+            }
+
+            UI.btnBreed.addEventListener('click', () => {
+                if(selectedSire && selectedDam) {
+                    const res = nurtureMgr.startBreeding(selectedSire.id, selectedDam.id, parseInt(UI.slider.value));
+                    if(res.success) {
+                        alert(`【神谕播印】Gen ${Math.max(selectedSire.generation, selectedDam.generation)+1} 彩蛋步入孵化槽。`);
+                        selectedSire = null; selectedDam = null;
+                        UI.slotSire.innerHTML = `<span style="font-size:2rem">♂️</span><p>选择公马</p>`; UI.slotDam.innerHTML = `<span style="font-size:2rem">♀️</span><p>选择母马</p>`;
+                        UI.slotSire.classList.remove('selected'); UI.slotDam.classList.remove('selected');
+                        renderApp();
+                    } else { alert("繁育失败: " + res.reason); }
+                }
+            });
+
+            window.openModal = (actionType) => {
+                currentModalAction = actionType; UI.modalGrid.innerHTML = ''; UI.modal.classList.remove('hidden');
+                let ponies = [];
+                if(actionType === 'male') {
+                    UI.modalTitle.innerText = "❤️ 选择伴生源 (Sire)"; ponies = gameState.ponies.filter(p => p.gender === 'male' && p.state === PONY_STATES.ADULT);
+                } else if (actionType === 'female') {
+                    UI.modalTitle.innerText = "❤️ 选择基质体 (Dam)"; ponies = gameState.ponies.filter(p => p.gender === 'female' && p.state === PONY_STATES.ADULT);
+                } else if (actionType.startsWith('race_')) {
+                    const tid = actionType.replace('race_', ''); ponies = gameState.ponies.filter(p => p.state === PONY_STATES.ADULT);
+                }
+                if(ponies.length === 0) { UI.modalGrid.innerHTML = "<p>无可用马匹实体。</p>"; return; }
+
+                ponies.forEach(p => {
+                    const hpScore = p.stats ? p.stats.speed + p.stats.endurance + p.stats.spirit : 0;
+                    const card = document.createElement('div'); card.className = 'sel-card';
+                    card.innerHTML = `
+                        <div class="badge badge-gen">Gen ${p.generation}</div>
+                        <div style="height:80px; display:flex; justify-content:center; align-items:center;">${PonyRenderer.renderPonySVG(p.dna)}</div>
+                        <div class="gender-badge ${p.gender==='male'?'gender-male':'gender-female'}">${p.gender==='male'?'♂':'♀'}</div>
+                        <div style="font-size:0.9rem">${p.name}</div>
+                        <div style="font-size:0.8rem;color:#FFD700">体力:${p.stamina} | 火力:${hpScore}</div>
+                    `;
+                    card.onclick = () => selectFromModal(p);
+                    UI.modalGrid.appendChild(card);
+                });
+            };
+
+            window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
+
+            function selectFromModal(pony) {
+                if(currentModalAction === 'male') { selectedSire = pony; refreshBreedingSlots(); }
+                else if(currentModalAction === 'female') { selectedDam = pony; refreshBreedingSlots(); }
+                else if(currentModalAction.startsWith('race_')) {
+                    const res = racingMgr.racePony(pony.id, currentModalAction.replace('race_', ''));
+                    if(res.success) {
+                        let tknMsg = res.gotToken ? "\n🎊 【巨额红利】掉落了 1 枚祈愿代币！" : "";
+                        alert(res.isWin ? `🏆 战报捷报！斩获 ${res.coinsWon} 金币！${tknMsg}` : `❌ 惜败战役...由于综合火力无法撕扯防线。`);
+                    } else { alert(res.reason); }
+                }
+                closeModal('pony-modal');
+            }
+
+            // Bindings
+            window.actionSpeedUp = (id) => { const res = nurtureMgr.speedUpBreeding(id); if(!res.success) alert(res.reason); };
+            window.actionFeed = (id) => { const res = nurtureMgr.feedPony(id); if(!res.success) alert(res.reason); };
+            window.actionSell = (id) => {
+                const pony = gameState.ponies.find(p=>p.id===id);
+                if(pony && confirm(`黑市给出 ${marketMgr.evaluatePony(pony)} 金币的估值，卖吗？`)) marketMgr.sellPony(id);
+            };
+            window.actionBuy = (idx) => {
+                const item = gameState.market.stock[idx];
+                if(item && confirm(`引援这匹马需要耗费 ${item.cost} 金币，是否付款？`)) {
+                    const res = marketMgr.buyPony(idx);
+                    if(res.success) alert(`引援成功！这匹神秘的新血已加入您的马厩。`);
+                    else alert(res.reason);
+                }
+            };
+            window.actionForceRestock = () => {
+                if(gameState.tokens >= 1) {
+                    gameState.tokens -= 1;
+                    marketMgr.checkRestock(true);
+                    alert("消耗1代币，货架已强制翻新！");
+                } else alert("代币不足。");
+            };
+            window.actionRename = (id) => {
+                const pony = gameState.ponies.find(p=>p.id===id);
+                if(pony) {
+                    const nn = prompt("为爱驹赐名：", pony.name);
+                    if(nn) { pony.rename(nn); SaveManager.save(gameState); renderApp(); openDetailView(id); }
+                }
+            };
+            window.actionGacha = () => {
+                const res = gachaMgr.roll();
+                if(res.success) alert(res.message); else alert(res.reason);
+            };
+
+            window.actionFarmPlant = (idx) => { const res = farmMgr.plantSeed(idx); if(!res.success) alert(res.reason); };
+            window.actionFarmHarvest = (idx) => { const res = farmMgr.harvest(idx); if(res.success) alert(`收获 ${res.yield} 胡萝卜！`); else alert(res.reason); };
+            window.actionFarmUnlock = (idx) => { const res = farmMgr.unlockPlot(idx); if(!res.success) alert(res.reason); };
+            window.actionTrainStat = (id, stat) => { const res = trainingMgr.trainStat(id, stat); if(res.success) openDetailView(id); else alert(res.reason); };
+
+            window.openDetailView = (id) => {
+                const pony = gameState.ponies.find(p => p.id === id);
+                if(!pony) return;
+                
+                let statsHtml = '';
+                if(pony.state !== PONY_STATES.INCUBATING && pony.stats) {
+                    const stMap = { speed: {lab:'速度', cls:'speed'}, endurance: {lab:'耐力', cls:'endurance'}, spirit: {lab:'灵性', cls:'spirit'} };
+                    Object.keys(stMap).forEach(key => {
+                        const cur = pony.stats[key]; const mAx = pony.statsMax[key];
+                        const pct = Math.min(100, (cur/mAx)*100);
+                        const cost = trainingMgr.getTrainingCost(id, key);
+                        const btnState = cost === -1 ? 'disabled' : ''; const btnTxt = cost === -1 ? '真理极限' : `限界突破(${cost}💰)`;
+                        statsHtml += `<div class="stat-row"><div class="stat-label">${stMap[key].lab}</div><div class="stat-bar-bg"><div class="stat-bar-fill ${stMap[key].cls}" style="width:${pct}%"></div></div><div class="stat-value">${cur}/${mAx}</div><button class="btn train-btn" ${btnState} onclick="actionTrainStat('${pony.id}', '${key}')" ${pony.state===PONY_STATES.RETIRED?'disabled':''}>${btnTxt}</button></div>`;
+                    });
+                }
+                
+                const svgCont = pony.state === PONY_STATES.INCUBATING ? PonyRenderer.renderEggSVG() : PonyRenderer.renderPonySVG(pony.dna);
+
+                UI.detailWrapper.innerHTML = `
+                    <button class="close-btn" onclick="closeModal('detail-modal')">&times;</button>
+                    <div class="detail-layout">
+                        <div class="detail-svg-box"><div class="badge badge-gen" style="font-size:1.2rem; top:20px; left:20px;">Gen ${pony.generation}</div>${svgCont}</div>
+                        <div class="detail-info">
+                            <h2>${pony.name} <button class="btn-icon" onclick="actionRename('${pony.id}')">✏️</button> ${pony.gender==='male'?'♂️':'♀️'}</h2>
+                            <p style="color:#aaa; margin-bottom:10px;">状态: ${pony.state.toUpperCase()} | 体力: ${pony.stamina}/${pony.maxStamina}</p>
+                            <hr style="border-color:rgba(255,255,255,0.1); margin: 20px 0;">
+                            <h3>特训演算核心</h3>
+                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:15px;">基因天花板决定属性上限（取决于神话级/史诗级槽位累积）。</p>
+                            ${statsHtml || '<p>蛋壳内部信息屏蔽中...</p>'}
+                        </div>
+                    </div>
+                `;
+                UI.detailModal.classList.remove('hidden');
+            };
+
+            function renderApp() {
+                UI.coins.textContent = gameState.coins; UI.carrots.textContent = gameState.carrots; UI.tokens.textContent = gameState.tokens;
+                
+                UI.stable.innerHTML = '';
+                [...gameState.ponies].reverse().forEach(pony => {
+                    const card = document.createElement('div'); card.className = 'pony-card glass-panel';
+                    let svgContent = ''; let statusText = ''; let actionHtml = `<button class="btn" onclick="openDetailView('${pony.id}')">👀 传唤模型</button>`;
+
+                    if(pony.state === PONY_STATES.INCUBATING) {
+                        svgContent = PonyRenderer.renderEggSVG();
+                        const remMs = Math.max(0, pony.incubationTotalMs - pony.incubationElapsedMs);
+                        const cost = Math.ceil((remMs / 3600000) * 120);
+                        statusText = `<p>化卵中: ${(remMs/3600000).toFixed(1)} h</p>`;
+                        actionHtml = `<button class="btn" style="background:#FFD700; color:#000;" onclick="actionSpeedUp('${pony.id}')">💰 流场加速(${cost})</button>`;
+                    } else {
+                        svgContent = PonyRenderer.renderPonySVG(pony.dna);
+                        let badge = '';
+                        if(pony.dna && pony.dna.isTranscendent) badge = '<div class="badge badge-transcendent">👑 超越者</div>';
+                        else if(pony.dna && pony.dna.mythicCount > 0) badge = '<div class="badge badge-mythic">🔱 神话</div>';
+                        else if(pony.dna && pony.dna.epicCount > 0) badge = '<div class="badge">🔥 史诗</div>';
+                        if(pony.state === PONY_STATES.RETIRED) badge = '<div class="badge badge-retire">🕰️ 断连代码</div>';
+                        
+                        statusText = `${badge}<div class="badge badge-gen">Gen ${pony.generation}</div><span class="gender-badge ${pony.gender==='male'?'gender-male':'gender-female'}">${pony.gender==='male'?'♂':'♀'}</span><p style="margin-top:5px; font-weight:bold; font-size:0.9rem;">活力: ${pony.stamina} | 火力: ${pony.stats.speed+pony.stats.endurance+pony.stats.spirit}</p>`;
+                    }
+                    card.innerHTML = `<div class="pony-svg-container">${svgContent}</div><div class="pony-info"><h3>${pony.name}</h3>${statusText}<div class="action-row">${actionHtml}</div></div>`;
+                    UI.stable.appendChild(card);
+                });
+
+                UI.farmContainer.innerHTML = '';
+                gameState.farm.plots.forEach((plot, idx) => {
+                    const pDiv = document.createElement('div'); const sInfo = farmMgr.getPlotStatus(idx);
+                    if(!plot.unlocked) { pDiv.className = 'farm-plot locked glass-panel'; pDiv.innerHTML = `<div class="farm-plot-content"><span class="farm-plot-icon" style="color:#aaa">🔒</span><p>封印</p><button class="btn" style="margin-top:10px;" onclick="actionFarmUnlock(${idx})">注资解锁 (${plot.costToUnlock}💰)</button></div>`; } 
+                    else if(sInfo.status === 'empty') { pDiv.className = 'farm-plot glass-panel'; pDiv.innerHTML = `<div class="farm-plot-content"><span class="farm-plot-icon">🌱</span><p>空闲槽位</p><button class="btn" onclick="actionFarmPlant(${idx})">栽种(50💰)</button></div>`; } 
+                    else if(sInfo.status === 'growing') { pDiv.className = 'farm-plot glass-panel'; const prog = 100 - (sInfo.remainingMs / plot.growMs * 100); pDiv.innerHTML = `<div class="farm-plot-content"><span class="farm-plot-icon">🌿</span><p>细胞增殖</p><div class="growing-bar-bg"><div class="growing-bar-fill" style="width:${prog}%"></div></div></div>`; } 
+                    else if(sInfo.status === 'ready') { pDiv.className = 'farm-plot glass-panel'; pDiv.innerHTML = `<div class="farm-plot-content"><span class="farm-plot-icon" style="animation:glowing 1s infinite">🥕</span><p style="color:#FFD700;">成熟化</p><button class="btn" onclick="actionFarmHarvest(${idx})">采摘并入库</button></div>`; }
+                    UI.farmContainer.appendChild(pDiv);
+                });
+
+                // Render Market Sells
+                UI.marketSellContainer.innerHTML = '';
+                [...gameState.ponies].forEach(pony => {
+                    const price = marketMgr.evaluatePony(pony);
+                    const mDiv = document.createElement('div'); mDiv.className = 'glass-panel'; mDiv.style.display = 'flex'; mDiv.style.alignItems = 'center'; mDiv.style.gap = '15px';
+                    const svgHtml = pony.state === PONY_STATES.INCUBATING ? PonyRenderer.renderEggSVG() : PonyRenderer.renderPonySVG(pony.dna);
+                    mDiv.innerHTML = `<div style="width:70px;height:70px;border-radius:10px;background:rgba(0,0,0,0.2)">${svgHtml}</div><div style="flex:1"><h3>${pony.name} [Gen ${pony.generation}]</h3><p style="font-size:0.8rem;color:#FFD700;font-weight:bold">${price}💰</p></div><button class="btn" style="width:auto;background:#e74c3c" onclick="actionSell('${pony.id}')">脱手</button>`;
+                    UI.marketSellContainer.appendChild(mDiv);
+                });
+                
+                // Render Market Buys
+                UI.marketBuyContainer.innerHTML = '';
+                if(gameState.market.stock.length === 0) {
+                     UI.marketBuyContainer.innerHTML = `<p style="color:#888;">货架为空。每8小时由系统自动进驻流浪种马。</p>`;
+                } else {
+                    gameState.market.stock.forEach((item, idx) => {
+                        const mDiv = document.createElement('div'); mDiv.className = 'glass-panel'; mDiv.style.display = 'flex'; mDiv.style.alignItems = 'center'; mDiv.style.gap = '15px';
+                        const svgHtml = item.pony.state === PONY_STATES.INCUBATING ? PonyRenderer.renderEggSVG() : PonyRenderer.renderPonySVG(item.pony.dna);
+                        let tags = `<div class="badge-gen" style="position:static; display:inline-block; margin-bottom:5px;">Gen ${item.pony.generation}</div>`;
+                        if(item.pony.dna.isTranscendent) tags += `<span style="color:#FFD700;font-weight:bold;font-size:0.8rem;margin-left:5px;">👑超越者</span>`;
+                        else if(item.pony.dna.mythicCount > 0) tags += `<span style="color:#FF00FF;font-weight:bold;font-size:0.8rem;margin-left:5px;">🔱神话级</span>`;
+                        mDiv.innerHTML = `<div style="width:70px;height:70px;border-radius:10px;background:rgba(0,0,0,0.4)">${svgHtml}</div><div style="flex:1">${tags}<h3>${item.pony.name}</h3><p style="font-size:0.8rem;color:#FFD700;font-weight:bold">${item.cost}💰</p></div><button class="btn" style="width:auto;background:#2E8B57" onclick="actionBuy(${idx})">引进</button>`;
+                        UI.marketBuyContainer.appendChild(mDiv);
+                    });
+                }
+            }
+
+            renderApp();
+            
+            setInterval(() => {
+                let changed = false;
+                gameState.ponies.forEach(p => { if(p.state !== PONY_STATES.RETIRED) { p.advanceTime(10000); changed = true; } });
+                if(changed) { SaveManager.save(gameState); renderApp(); }
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
