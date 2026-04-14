@@ -1,0 +1,10 @@
+# Pony Game Verification Task List - FAILED
+
+The browser tools are failing with a "wrong CDP URL" error. Automation is blocked.
+
+- [x] Navigate to the game page (FAILED: Browser error)
+- [ ] Open Save Manager (⚙️ button)
+- [ ] Reset all progress
+- [ ] Verify 2000 coins
+- [ ] Verify 3 ponies (Adam, Eve, Lucky Star)
+- [ ] Confirm Lucky Star is in stable
