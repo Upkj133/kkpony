@@ -19,11 +19,14 @@
 <body>
     <header class="glass-panel">
         <h1>🦄 小马世界 V5: 诸神降诞</h1>
-        <ul class="resource-bar">
-            <li class="resource coins" title="金币">💰 <span id="coin-counter">0</span></li>
-            <li class="resource carrots" title="体力胡萝卜">🥕 <span id="carrot-counter">0</span></li>
-            <li class="resource tokens" title="祈愿代币">🪙 <span id="token-counter">0</span></li>
-        </ul>
+        <div style="display:flex; align-items:center; gap:20px;">
+            <ul class="resource-bar">
+                <li class="resource coins" title="金币">💰 <span id="coin-counter">0</span></li>
+                <li class="resource carrots" title="体力胡萝卜">🥕 <span id="carrot-counter">0</span></li>
+                <li class="resource tokens" title="祈愿代币">🪙 <span id="token-counter">0</span></li>
+            </ul>
+            <button class="btn" style="width:auto; margin:0; padding:8px 12px; font-size:1.2rem; background:rgba(255,255,255,0.1);" onclick="openSaveManager()" title="存档管理">⚙️</button>
+        </div>
     </header>
 
     <div class="nav-tabs">
@@ -136,6 +139,21 @@
     <!-- Details/Training Modal -->
     <div id="detail-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel" style="max-width:900px;" id="detail-wrapper">
+        </div>
+    </div>
+
+    <!-- Save Manager Modal -->
+    <div id="save-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width:500px;">
+            <button class="close-btn" onclick="closeModal('save-modal')">&times;</button>
+            <h2>⚙️ 存档管理中心</h2>
+            <p style="color:#aaa; margin-bottom:20px; font-size:0.9rem;">导出存档码可用于在其他设备恢复进度。导入存档将重载页面。</p>
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                <button class="btn" style="background:#00d2ff;" onclick="actionExportSave()">📤 复制存档码 (导出)</button>
+                <button class="btn" style="background:#3a7bd5;" onclick="actionImportSave()">📥 输入存档码 (导入)</button>
+                <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:10px 0;">
+                <button class="btn" style="background:#e74c3c;" onclick="actionResetGame()">🛑 重置所有进度</button>
+            </div>
         </div>
     </div>
 
@@ -298,6 +316,33 @@
             window.actionFarmHarvest = (idx) => { const res = farmMgr.harvest(idx); if(res.success) alert(`收获 ${res.yield} 胡萝卜！`); else alert(res.reason); };
             window.actionFarmUnlock = (idx) => { const res = farmMgr.unlockPlot(idx); if(!res.success) alert(res.reason); };
             window.actionTrainStat = (id, stat) => { const res = trainingMgr.trainStat(id, stat); if(res.success) openDetailView(id); else alert(res.reason); };
+
+            window.openSaveManager = () => { document.getElementById('save-modal').classList.remove('hidden'); };
+            window.actionExportSave = () => {
+                const code = SaveManager.exportSave();
+                if (code) {
+                    navigator.clipboard.writeText(code).then(() => {
+                        alert("存档码已复制到剪贴板！请妥善保存。");
+                    });
+                } else {
+                    alert("当前无存档数据。");
+                }
+            };
+            window.actionImportSave = () => {
+                const code = prompt("请在此粘贴存档码：");
+                if (code && SaveManager.importSave(code)) {
+                    alert("存档导入成功！页面即将重载...");
+                    location.reload();
+                } else if (code) {
+                    alert("存档码无效，请检查后重试。");
+                }
+            };
+            window.actionResetGame = () => {
+                if (confirm("确定要永久删除所有马匹和进度吗？此操作不可撤销！")) {
+                    SaveManager.clear();
+                    location.reload();
+                }
+            };
 
             window.openDetailView = (id) => {
                 const pony = gameState.ponies.find(p => p.id === id);

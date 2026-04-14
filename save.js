@@ -15,15 +15,21 @@ class SaveManager {
         eve.statsMax = { speed: 80, endurance: 80, spirit: 80 };
         eve.stats = { speed: 40, endurance: 40, spirit: 40 };
 
+        const lucky = new Pony("pony_lucky", "起始之星-幸运儿", 3, "male", null, null, 1);
+        lucky.state = PONY_STATES.FOAL; // Start as a foal
+        lucky.dna = GeneticsManager.generatePonyTraits(4, 1, null, null);
+        lucky.dna.epicCount = Math.max(lucky.dna.epicCount, 1); // Ensure at least one epic trait
+        lucky.generateStatsBounds();
+
         return {
             lastSaveTime: Date.now(),
-            coins: 15000, 
-            carrots: 100,
-            tokens: 15, // V5: Give some tokens initially
-            ponies: [adam, eve],
+            coins: 2000, 
+            carrots: 50,
+            tokens: 10, 
+            ponies: [adam, eve, lucky],
             stats: { totalBred: 0, racesWon: 0, totalGacha: 0 },
             farm: null,
-            market: { lastRefreshMs: 0, stock: [] } // For daily stock tracking
+            market: { lastRefreshMs: 0, stock: [] } 
         };
     }
 
@@ -66,6 +72,31 @@ class SaveManager {
             ...gameState,
             ponies: gameState.ponies.map(p => p.toJSON())
         }));
+    }
+
+    static exportSave() {
+        const data = localStorage.getItem(SaveManager.SAVE_KEY);
+        if (!data) return null;
+        try {
+            return btoa(unescape(encodeURIComponent(data)));
+        } catch (e) {
+            console.error("Export failed", e);
+            return null;
+        }
+    }
+
+    static importSave(b64String) {
+        try {
+            const jsonStr = decodeURIComponent(escape(atob(b64String)));
+            const data = JSON.parse(jsonStr);
+            if (data && data.ponies) {
+                localStorage.setItem(SaveManager.SAVE_KEY, jsonStr);
+                return true;
+            }
+        } catch (e) {
+            console.error("Import failed", e);
+        }
+        return false;
     }
 
     static clear() { localStorage.removeItem(SaveManager.SAVE_KEY); }
